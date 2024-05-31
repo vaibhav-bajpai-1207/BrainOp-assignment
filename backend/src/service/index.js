@@ -1,6 +1,7 @@
 const Repository = require('../database/index')
 const RequestResponse = require('../utils/ResponseClass')
 const { ApiError, ValidationError, NotFoundError } = require('../utils/errorClass')
+const { generateToken } = require('../utils/token')
 
 class Service {
     constructor() {
@@ -45,6 +46,48 @@ class Service {
                 throw new NotFoundError('Service Error : User with given id not found')
             }
             return new RequestResponse(user)
+        }catch(err){
+            if (err instanceof ApiError || err instanceof ValidationError || err instanceof NotFoundError) {
+                throw err
+            }
+            throw new ApiError('Service Error : ' + err.message)
+        }
+    }
+    //#endregion
+
+    //#region LOGIN USER
+    async loginUser({email, password}){
+        try{
+            if(!email || email === '') {
+                throw new ValidationError('Service Error : email not provided')
+            }
+            if(!password || password === '') {
+                throw new ValidationError('Service Error : password not provided')
+            }
+
+            const response = await this.repo.getUserByQuery({email: email})
+            const user = response[0]
+
+            if(!user){
+                throw new NotFoundError('Service Error : User with given email not found')
+            }
+            
+            if(user.password !== password){
+                throw new ValidationError('Service Error : password is incorrect')
+            }
+
+            const token = await generateToken(user._id)
+
+            const responseObj = {
+                id: user._id,
+                email: user.email,
+                fname: user.fname,
+                lname: user.lname,
+                profileImg: user.profileImg,
+                token: token
+            }
+            
+            return new RequestResponse(responseObj)
         }catch(err){
             if (err instanceof ApiError || err instanceof ValidationError || err instanceof NotFoundError) {
                 throw err

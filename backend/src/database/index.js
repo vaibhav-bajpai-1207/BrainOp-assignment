@@ -49,6 +49,17 @@ class Repository {
 
     //#region USER SECTION
 
+    //#region GET USER BY QUERY
+    async getUserByQuery(query){
+        try{
+            const response = await User.find(query)
+            return response
+        }catch(err){
+            throw new ApiError('DB error : ' + err.message)
+        }
+    }
+    //#endregion
+
     //#region GET USER BY USER ID
     async getUserById(userId){
         try{
